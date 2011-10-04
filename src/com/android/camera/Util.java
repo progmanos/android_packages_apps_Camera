@@ -336,6 +336,11 @@ public class Util {
             camera.setParameters(parameters);
         }
 
+	if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                Log.e(TAG, "Force Front Facing = 180");
+		result = 180;
+	}
+	
         camera.setDisplayOrientation(result);
     }
 }
