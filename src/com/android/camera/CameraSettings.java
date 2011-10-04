@@ -284,6 +284,7 @@ public class CameraSettings {
     }
 
     private boolean checkTouchFocus() {
+        Log.e(TAG, "Check touch focus support");
         if (mParameters.get("taking-picture-zoom") != null ||
             mParameters.get("touch-focus") != null) {
             /* HTC camera, which always have touch-to-focus support. Unfortunately
@@ -306,7 +307,8 @@ public class CameraSettings {
 	if (mParameters.get("touch-af-aec") != null) {
 	    /* mt9x sensors support this */
 	    sTouchFocusParameter = "touch-af-aec";
-	    sTouchFocusNeedsRect = true;
+	    sTouchFocusNeedsRect = false;
+            Log.e(TAG, "Enable touch focus Triumph");
 	    return true;
         }
         if (mParameters.get("mot-areas-to-focus") != null ||
