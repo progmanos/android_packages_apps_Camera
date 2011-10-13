@@ -304,13 +304,18 @@ public class CameraSettings {
             sTouchFocusNeedsRect = true;
             return true;
         }
-	if (mParameters.get("touch-af-aec") != null) {
-	    /* mt9x sensors support this */
-	    sTouchFocusParameter = "touch-af-aec";
-	    sTouchFocusNeedsRect = false;
-            Log.e(TAG, "Enable touch focus Triumph");
-	    return true;
-        }
+        Log.e(TAG, "Check touch focus Triumph = " + mParameters.get("touch-af-aec-values"));
+	if (mParameters.get("touch-af-aec-values") != null) {
+		if (mParameters.get("touch-af-aec-values").equals("touch-off")) {
+		    Log.e(TAG, "Front cam Triumph - NO touch focus and no autofocus");
+		} else {
+		    /* mt9x sensors support this; hm (front cam) does not */
+		    sTouchFocusParameter = "touch-af-aec";
+		    sTouchFocusNeedsRect = false;
+		    Log.e(TAG, "Enable touch focus Triumph");
+		    return true;
+       	 	}
+	}
         if (mParameters.get("mot-areas-to-focus") != null ||
             mParameters.get("mot-max-burst-size") != null) {
             /* Motorola camera with touch-to-focus support.
