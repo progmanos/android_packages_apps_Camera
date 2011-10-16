@@ -804,6 +804,7 @@ public class Camera extends BaseCamera implements View.OnClickListener,
                 CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
                 if (info.facing == CameraInfo.CAMERA_FACING_FRONT &&
                         info.orientation != 90) {
+            		Log.v(TAG, "Rotation " + info.orientation + " mOrientation " + mOrientation);
                     rotation = (info.orientation - mOrientation + 360) % 360;
                 } else {  // back-facing camera (or acting like it)
                     rotation = (info.orientation + mOrientation) % 360;
