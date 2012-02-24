@@ -193,8 +193,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private final StringBuilder mBuilder = new StringBuilder();
     private final Formatter mFormatter = new Formatter(mBuilder);
     private final Object[] mFormatterArgs = new Object[1];
-
-    /**
+    
+   /**
      * An unpublished intent flag requesting to return as soon as capturing
      * is completed.
      *
@@ -1119,7 +1119,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         String[] defaultFocusModes = getResources().getStringArray(
                 R.array.pref_camera_focusmode_default_array);
         mFocusManager = new FocusManager(mPreferences, defaultFocusModes);
-
+        android.os.Debug.waitForDebugger();
         /*
          * To reduce startup time, we start the camera open and preview threads.
          * We make sure the preview is started at the end of onCreate.
@@ -1860,7 +1860,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             }
             mFocusManager.setAeAwbLock(false); // Unlock AE and AWB.
         }
-        setCameraParameters(UPDATE_PARAM_ALL);
+	  setCameraParameters(UPDATE_PARAM_INITIALIZE);
+//        setCameraParameters(UPDATE_PARAM_ALL);
 
         // Inform the mainthread to go on the UI initialization.
         if (mCameraPreviewThread != null) {
@@ -1952,26 +1953,42 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         if (pictureSize == null) {
             CameraSettings.initialCameraPictureSize(this, mParameters);
         } else {
+	    Log.d(TAG,"pictureSize is: " + pictureSize);
             List<Size> supported = mParameters.getSupportedPictureSizes();
             CameraSettings.setCameraPictureSize(
                     pictureSize, supported, mParameters);
         }
 
         // Set the preview frame aspect ratio according to the picture size.
+        if(mParameters == null) Log.d(TAG, "mParameters is null");        
+        // temporary hack
+//        mParameters.setPictureSize(640,480);
         Size size = mParameters.getPictureSize();
-
+	Integer width = null;
+	try {
+	    width = Integer.valueOf(size.width);
+	} catch (Throwable e) {
+	    closeCamera();
+	    throw new RuntimeException("failed to get value of size.width", e);
+	}
+	if(width == null) Log.d(TAG, "size.width is null");
         mPreviewPanel = findViewById(R.id.frame_layout);
         mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
         mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
 
         // Set a preview size that is closest to the viewfinder height and has
         // the right aspect ratio.
+	//temporary hack 
+//	mParameters.setPreviewSize(640,480);
         List<Size> sizes = mParameters.getSupportedPreviewSizes();
         Size optimalSize = Util.getOptimalPreviewSize(this,
-                sizes, (double) size.width / size.height);
-        Size original = mParameters.getPreviewSize();
+                sizes, (double) size.width / size.height);  // replace with size.width, size.height
+        
+	Size original = mParameters.getPreviewSize();
         if (!original.equals(optimalSize)) {
-            mParameters.setPreviewSize(optimalSize.width, optimalSize.height);
+//            mParameters.setPreviewSize(optimalSize.width, optimalSize.height);
+            //temporary hack 
+//            mParameters.setPreviewSize(640,480);
 
             // If preview is running, stop preview and let startPreview call
             // this function again because we cannot change size on the fly
@@ -1986,7 +2003,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mCameraDevice.setParameters(mParameters);
             mParameters = mCameraDevice.getParameters();
         }
-        Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
+        //Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
 
         // Since change scene mode may change supported values,
         // Set scene mode first,
@@ -2059,8 +2076,31 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             }
 
             // Set focus mode.
-            mFocusManager.overrideFocusMode(null);
-            mParameters.setFocusMode(mFocusManager.getFocusMode());
+            /*mFocusManager.overrideFocusMode(null);
+            mParameters.setFocusMode(mFocusManager.getFocusMode());*/
+            //temporary hack
+            // Set focus mode.
+            String mFocusMode = mPreferences.getString(
+                    CameraSettings.KEY_FOCUS_MODE,
+                    getString(R.string.pref_camera_focusmode_default));
+
+            // Set capture mode.
+            //String mCaptureMode = mPreferences.getString(
+             //       CameraSettings.KEY_CAPTURE_MODE,
+               //     getString(R.string.pref_camera_capturemode_entry_default));
+
+            if (isSupported(mFocusMode, mParameters.getSupportedFocusModes())) {
+                mParameters.setFocusMode(mFocusMode);
+            } else if (CameraSettings.FOCUS_MODE_TOUCH.equals(mFocusMode)) {
+                mParameters.setFocusMode(Parameters.FOCUS_MODE_AUTO);
+            } else {
+                mFocusMode = mParameters.getFocusMode();
+                if (mFocusMode == null) {
+                    mFocusMode = Parameters.FOCUS_MODE_AUTO;
+                }
+            }
+//            clearFocusState();
+
         } else {
             mFocusManager.overrideFocusMode(mParameters.getFocusMode());
         }
@@ -2087,6 +2127,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         if ((updateSet & UPDATE_PARAM_PREFERENCE) != 0) {
             updateCameraParametersPreference();
         }
+        CameraSettings.dumpParameters(mParameters);
 
         mCameraDevice.setParameters(mParameters);
     }
@@ -2334,6 +2375,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private void initializeCapabilities() {
         mInitialParams = mCameraDevice.getParameters();
+	if (mInitialParams == null) Log.d(TAG, "initializeCapabilities gives null mInitialParams");
+        Log.d(TAG, "initializeCapabilities with mInitialParams: " + mInitialParams.toString());
         mFocusManager.initializeParameters(mInitialParams);
         mFocusAreaSupported = (mInitialParams.getMaxNumFocusAreas() > 0
                 && isSupported(Parameters.FOCUS_MODE_AUTO,

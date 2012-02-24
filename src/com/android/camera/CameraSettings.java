@@ -26,8 +26,14 @@ import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
 import android.util.Log;
 
+import com.android.camera.R;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
+
 
 /**
  *  Provides utilities and keys for Camera settings.
@@ -53,6 +59,8 @@ public class CameraSettings {
     public static final String KEY_CAMERA_FIRST_USE_HINT_SHOWN = "pref_camera_first_use_hint_shown_key";
     public static final String KEY_VIDEO_FIRST_USE_HINT_SHOWN = "pref_video_first_use_hint_shown_key";
     public static final String KEY_POWER_SHUTTER = "pref_power_shutter";
+
+    public static final String FOCUS_MODE_TOUCH = "touch";
 
     public static final String EXPOSURE_DEFAULT_VALUE = "0";
 
@@ -108,6 +116,9 @@ public class CameraSettings {
         // supported by the driver.
         List<Size> supported = parameters.getSupportedPictureSizes();
         if (supported == null) return;
+	Log.d(TAG, "initialCameraPictureSize: " + 
+		context.getResources().getStringArray(
+			R.array.pref_camera_picturesize_entryvalues).toString());
         for (String candidate : context.getResources().getStringArray(
                 R.array.pref_camera_picturesize_entryvalues)) {
             if (setCameraPictureSize(candidate, supported, parameters)) {
@@ -128,6 +139,7 @@ public class CameraSettings {
 
     public static boolean setCameraPictureSize(
             String candidate, List<Size> supported, Parameters parameters) {
+	Log.d(TAG, "setCameraPictureSize with candidate: " + candidate);
         int index = candidate.indexOf('x');
         if (index == NOT_FOUND) return false;
         int width = Integer.parseInt(candidate.substring(0, index));
@@ -298,6 +310,12 @@ public class CameraSettings {
             list.add(String.format("%dx%d", size.width, size.height));
         }
         return list;
+    }
+    
+      public static void dumpParameters(Parameters params) {
+        Set<String> sortedParams = new TreeSet<String>();
+        sortedParams.addAll(Arrays.asList(params.flatten().split(";")));
+        Log.d(TAG, "Parameters: " + sortedParams.toString());
     }
 
     public static void upgradeLocalPreferences(SharedPreferences pref) {

@@ -20,6 +20,9 @@
 <!-- These resources are around just to allow their values to be customized
      for different hardware and product builds. -->
 <resources>
+      <!-- Resolution filtering -->
+        <string name="filtered_pictureSizes"></string>
+
     <!-- Samsung Camcorder Mode -->
     <bool name="needsSamsungCamMode">false</bool>
 </resources>
